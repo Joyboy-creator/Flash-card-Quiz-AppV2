@@ -16,7 +16,7 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.iconText}>📚</Text>
         </View>
 
-        <Text style={styles.title}>Flashcard Quiz</Text>
+        <Text style={styles.title}>FlashCard Quiz</Text>
         <Text style={styles.subtitle}>
           Create custom study decks, flip cards to reveal answers, and beat your high score.
         </Text>

@@ -118,6 +118,13 @@ export default function DeckListScreen({ navigation }) {
       />
 
       <TouchableOpacity
+        style={styles.homeFab}
+        onPress={() => navigation.popToTop()}
+      >
+        <Text style={styles.homeFabText}>🏠</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
         style={styles.fab}
         onPress={() => navigation.navigate('CreateDeck')}
       >

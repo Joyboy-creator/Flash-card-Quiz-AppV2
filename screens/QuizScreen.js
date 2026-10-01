@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ScrollView } from 'react-native';
 import styles from '../styles/QuizScreen.styles';
 
+const OPTION_LETTERS = ['A', 'B', 'C', 'D'];
+
 // Builds 4 shuffled options (1 correct + up to 3 wrong) for the given card
 function generateOptions(cards, currentIndex) {
   const correctAnswer = cards[currentIndex].answer;
@@ -116,16 +118,35 @@ export default function QuizScreen({ route, navigation }) {
       </View>
 
       {mode === 'multiple' ? (
-        options.map((option, idx) => (
-          <TouchableOpacity
-            key={idx}
-            style={getOptionStyle(option)}
-            onPress={() => handleSelectOption(option)}
-            disabled={isAnswered}
-          >
-            <Text style={getOptionTextStyle(option)}>{option}</Text>
-          </TouchableOpacity>
-        ))
+        options.map((option, idx) => {
+          const isCorrectAnswer = isAnswered && isMatch(option, currentCard.answer);
+          const isSelected = isAnswered && option === selectedOption;
+
+          let badgeStyle = [styles.optionLetterBadge];
+          let letterTextStyle = [styles.optionLetterText];
+
+          if (isCorrectAnswer) {
+            badgeStyle.push(styles.optionLetterBadgeCorrect);
+            letterTextStyle.push(styles.optionLetterTextSelected);
+          } else if (isSelected) {
+            badgeStyle.push(styles.optionLetterBadgeIncorrect);
+            letterTextStyle.push(styles.optionLetterTextSelected);
+          }
+
+          return (
+            <TouchableOpacity
+              key={idx}
+              style={getOptionStyle(option)}
+              onPress={() => handleSelectOption(option)}
+              disabled={isAnswered}
+            >
+              <View style={badgeStyle}>
+                <Text style={letterTextStyle}>{OPTION_LETTERS[idx]}</Text>
+              </View>
+              <Text style={getOptionTextStyle(option)}>{option}</Text>
+            </TouchableOpacity>
+          );
+        })
       ) : (
         <>
           <TextInput

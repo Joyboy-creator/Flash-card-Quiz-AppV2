@@ -14,7 +14,7 @@ export default StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(27, 208, 40, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,

@@ -131,7 +131,7 @@ export default StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 26,
+    bottom: 49,
     right: 24,
     backgroundColor: '#4a6fa5',
     width: 58,
@@ -149,5 +149,24 @@ export default StyleSheet.create({
     color: '#fff',
     fontSize: 30,
     lineHeight: 32,
+  },
+  homeFab: {
+    position: 'absolute',
+    bottom: 49,
+    left: 24,
+    backgroundColor: '#4a6fa5',
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#4a6fa5',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  homeFabText: {
+    fontSize: 26,
   },
 });
