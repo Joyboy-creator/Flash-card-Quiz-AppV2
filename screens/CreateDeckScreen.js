@@ -35,8 +35,8 @@ export default function CreateDeckScreen({ navigation }) {
 
     const newDeck = {
       id: Date.now().toString(),
-      title: title.trim(),
-      cards: validCards,
+      title: title.trim(),  // kapag valid na tanan
+      cards: validCards, 
       highScore: 0,
     };
 

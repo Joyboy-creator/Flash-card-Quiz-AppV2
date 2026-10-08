@@ -2,8 +2,9 @@ import { StyleSheet } from 'react-native';
 
 export default StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     padding: 24,
+    paddingBottom: 48,
     backgroundColor: '#f0f2f7',
   },
   progressBarTrack: {
@@ -86,6 +87,9 @@ export default StyleSheet.create({
   optionLetterTextSelected: {
     color: '#fff',
   },
+  optionTextWrapper: {
+    flex: 1,
+  },
   optionCorrect: {
     backgroundColor: '#e8f8ee',
     borderColor: '#27ae60',
@@ -98,6 +102,7 @@ export default StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#2c3e50',
+    flexWrap: 'wrap',
   },
   optionTextCorrect: {
     color: '#1e7e42',

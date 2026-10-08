@@ -1,56 +1,55 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ScrollView } from 'react-native';
 import styles from '../styles/QuizScreen.styles';
 
-const OPTION_LETTERS = ['A', 'B', 'C', 'D'];
+const LETTERS = ['A', 'B', 'C', 'D'];
 
-// Builds 4 shuffled options (1 correct + up to 3 wrong) for the given card
+// Gumawa ng 4 na choices: 1 tamang sagot + 3 maling sagot mula sa ibang cards
 function generateOptions(cards, currentIndex) {
   const correctAnswer = cards[currentIndex].answer;
 
-  const otherAnswers = cards
-    .filter(
-      (c, idx) =>
-        idx !== currentIndex &&
-        c.answer.trim().toLowerCase() !== correctAnswer.trim().toLowerCase()
-    )
-    .map((c) => c.answer);
+  const wrongAnswers = [];
+  for (let i = 0; i < cards.length; i++) {
+    if (i !== currentIndex && cards[i].answer.toLowerCase() !== correctAnswer.toLowerCase()) {
+      wrongAnswers.push(cards[i].answer);
+    }
+  }
 
-  const uniqueWrongAnswers = [...new Set(otherAnswers)];
-  const shuffledWrong = uniqueWrongAnswers.sort(() => Math.random() - 0.5).slice(0, 3);
+  // Alisin ang duplicates, kumuha lang ng 3, tapos ihalo sa tamang sagot
+  const uniqueWrong = [...new Set(wrongAnswers)].slice(0, 3);
+  const allOptions = [...uniqueWrong, correctAnswer];
 
-  const allOptions = [...shuffledWrong, correctAnswer];
+  // I-shuffle para random ang pagkakasunod-sunod
   return allOptions.sort(() => Math.random() - 0.5);
 }
 
+// Ito ang gamit sa pag-check kung tama ang sagot (hindi case sensitive)
 function isMatch(a, b) {
   return a.trim().toLowerCase() === b.trim().toLowerCase();
 }
 
 export default function QuizScreen({ route, navigation }) {
-  const { deck, mode } = route.params; // mode: 'multiple' | 'identification'
+  const { deck, mode } = route.params; // mode: 'multiple' o 'identification'
+  const cards = deck.cards;
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState(null); // multiple choice
-  const [typedAnswer, setTypedAnswer] = useState(''); // identification
-  const [isSubmitted, setIsSubmitted] = useState(false); // identification
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [typedAnswer, setTypedAnswer] = useState('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(0);
-
-  const currentCard = deck.cards[currentIndex];
-  const isLastCard = currentIndex === deck.cards.length - 1;
-  const progressPercent = ((currentIndex + 1) / deck.cards.length) * 100;
-
-  const options = useMemo(
-    () => (mode === 'multiple' ? generateOptions(deck.cards, currentIndex) : []),
-    [currentIndex, mode]
+  const [options, setOptions] = useState(() =>
+    mode === 'multiple' ? generateOptions(cards, 0) : []
   );
 
-  const isAnswered = mode === 'multiple' ? selectedOption !== null : isSubmitted;
-  const isCorrect =
-    mode === 'multiple'
-      ? isAnswered && isMatch(selectedOption, currentCard.answer)
-      : isAnswered && isMatch(typedAnswer, currentCard.answer);
+  const currentCard = cards[currentIndex];
+  const isLastCard = currentIndex === cards.length - 1;
+  const progressPercent = ((currentIndex + 1) / cards.length) * 100;
 
+  const isAnswered = mode === 'multiple' ? selectedOption !== null : isSubmitted;
+  const userAnswer = mode === 'multiple' ? selectedOption : typedAnswer;
+  const isCorrect = isAnswered && isMatch(userAnswer, currentCard.answer);
+
+  // Multiple choice: pagpili ng sagot
   function handleSelectOption(option) {
     if (isAnswered) return;
     setSelectedOption(option);
@@ -59,6 +58,7 @@ export default function QuizScreen({ route, navigation }) {
     }
   }
 
+  // Identification: pag-submit ng typed answer
   function handleSubmitTyped() {
     if (isSubmitted || !typedAnswer.trim()) return;
     setIsSubmitted(true);
@@ -67,33 +67,48 @@ export default function QuizScreen({ route, navigation }) {
     }
   }
 
+  // Pagpunta sa next question o pag-finish ng quiz
   function handleNext() {
     if (isLastCard) {
-      navigation.replace('Score', { deck, score, total: deck.cards.length, mode });
-    } else {
-      setSelectedOption(null);
-      setTypedAnswer('');
-      setIsSubmitted(false);
-      setCurrentIndex(currentIndex + 1);
+      navigation.replace('Score', { deck, score, total: cards.length, mode });
+      return;
+    }
+
+    const nextIndex = currentIndex + 1;
+    setCurrentIndex(nextIndex);
+    setSelectedOption(null);
+    setTypedAnswer('');
+    setIsSubmitted(false);
+
+    if (mode === 'multiple') {
+      setOptions(generateOptions(cards, nextIndex));
     }
   }
 
-  function getOptionStyle(option) {
-    if (!isAnswered) return styles.optionButton;
-    const isCorrectAnswer = isMatch(option, currentCard.answer);
-    const isSelected = option === selectedOption;
-    if (isCorrectAnswer) return [styles.optionButton, styles.optionCorrect];
-    if (isSelected) return [styles.optionButton, styles.optionIncorrect];
-    return styles.optionButton;
-  }
+  // Kinukuha ang tamang style ng bawat option (normal, tama, o mali)
+  function getOptionColors(option) {
+    if (!isAnswered) return { box: styles.optionButton, text: styles.optionText, badge: styles.optionLetterBadge, badgeText: styles.optionLetterText };
 
-  function getOptionTextStyle(option) {
-    if (!isAnswered) return styles.optionText;
-    const isCorrectAnswer = isMatch(option, currentCard.answer);
-    const isSelected = option === selectedOption;
-    if (isCorrectAnswer) return [styles.optionText, styles.optionTextCorrect];
-    if (isSelected) return [styles.optionText, styles.optionTextIncorrect];
-    return styles.optionText;
+    const correct = isMatch(option, currentCard.answer);
+    const selected = option === selectedOption;
+
+    if (correct) {
+      return {
+        box: [styles.optionButton, styles.optionCorrect],
+        text: [styles.optionText, styles.optionTextCorrect],
+        badge: [styles.optionLetterBadge, styles.optionLetterBadgeCorrect],
+        badgeText: [styles.optionLetterText, styles.optionLetterTextSelected],
+      };
+    }
+    if (selected) {
+      return {
+        box: [styles.optionButton, styles.optionIncorrect],
+        text: [styles.optionText, styles.optionTextIncorrect],
+        badge: [styles.optionLetterBadge, styles.optionLetterBadgeIncorrect],
+        badgeText: [styles.optionLetterText, styles.optionLetterTextSelected],
+      };
+    }
+    return { box: styles.optionButton, text: styles.optionText, badge: styles.optionLetterBadge, badgeText: styles.optionLetterText };
   }
 
   function getInputStyle() {
@@ -105,49 +120,43 @@ export default function QuizScreen({ route, navigation }) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {/* Progress bar sa taas */}
       <View style={styles.progressBarTrack}>
         <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
       </View>
       <Text style={styles.progress}>
-        Question {currentIndex + 1} of {deck.cards.length}
+        Question {currentIndex + 1} of {cards.length}
       </Text>
 
+      {/* Ang tanong */}
       <View style={styles.questionCard}>
         <Text style={styles.questionLabel}>QUESTION</Text>
         <Text style={styles.questionText}>{currentCard.question}</Text>
       </View>
 
-      {mode === 'multiple' ? (
+      {/* Multiple choice options */}
+      {mode === 'multiple' &&
         options.map((option, idx) => {
-          const isCorrectAnswer = isAnswered && isMatch(option, currentCard.answer);
-          const isSelected = isAnswered && option === selectedOption;
-
-          let badgeStyle = [styles.optionLetterBadge];
-          let letterTextStyle = [styles.optionLetterText];
-
-          if (isCorrectAnswer) {
-            badgeStyle.push(styles.optionLetterBadgeCorrect);
-            letterTextStyle.push(styles.optionLetterTextSelected);
-          } else if (isSelected) {
-            badgeStyle.push(styles.optionLetterBadgeIncorrect);
-            letterTextStyle.push(styles.optionLetterTextSelected);
-          }
-
+          const colors = getOptionColors(option);
           return (
             <TouchableOpacity
               key={idx}
-              style={getOptionStyle(option)}
+              style={colors.box}
               onPress={() => handleSelectOption(option)}
               disabled={isAnswered}
             >
-              <View style={badgeStyle}>
-                <Text style={letterTextStyle}>{OPTION_LETTERS[idx]}</Text>
+              <View style={colors.badge}>
+                <Text style={colors.badgeText}>{LETTERS[idx]}</Text>
               </View>
-              <Text style={getOptionTextStyle(option)}>{option}</Text>
+              <View style={styles.optionTextWrapper}>
+                <Text style={colors.text}>{option}</Text>
+              </View>
             </TouchableOpacity>
           );
-        })
-      ) : (
+        })}
+
+      {/* Identification text input */}
+      {mode === 'identification' && (
         <>
           <TextInput
             style={getInputStyle()}
@@ -169,22 +178,17 @@ export default function QuizScreen({ route, navigation }) {
         </>
       )}
 
+      {/* Feedback pagkatapos sumagot */}
       {isAnswered && (
-        <Text
-          style={[
-            styles.feedbackText,
-            isCorrect ? styles.feedbackCorrect : styles.feedbackIncorrect,
-          ]}
-        >
+        <Text style={[styles.feedbackText, isCorrect ? styles.feedbackCorrect : styles.feedbackIncorrect]}>
           {isCorrect ? '✓ Correct!' : `✗ Incorrect — the answer was "${currentCard.answer}"`}
         </Text>
       )}
 
+      {/* Next Question / See Results button */}
       {isAnswered && (
         <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-          <Text style={styles.nextButtonText}>
-            {isLastCard ? 'See Results' : 'Next Question'}
-          </Text>
+          <Text style={styles.nextButtonText}>{isLastCard ? 'See Results' : 'Next Question'}</Text>
         </TouchableOpacity>
       )}
 
